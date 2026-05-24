@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python src/pun_mgp_15min.py)"
+    ]
+  }
+}

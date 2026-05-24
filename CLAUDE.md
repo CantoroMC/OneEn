@@ -1,0 +1,2 @@
+Dopo il lavoro fatto, ho salvato i documenti pubblici in una nuova cartella e riorganizzato la struttura del file.
+Dobbiamo rivedere il gitignore, i collegamenti dei moduli ed in generale dare un commento sull'appropriatezza della struttura e se necessario rivederla prima di fare le correzioni.

@@ -6,25 +6,24 @@ eliminando la necessità di argparse quando si lavora in modalità interattiva.
 
 Logica data di default:
     Il MGP (Mercato del Giorno Prima) pubblica i risultati per D+1 intorno alle 12:55.
-    Dopo le 14:00 il dato di domani è disponibile → default = domani.
-    Prima delle 14:00 il dato di oggi è l'ultimo disponibile → default = oggi.
+    Dopo le 13:00 il dato di domani è disponibile → default = domani.
+    Prima delle 13:00 il dato di oggi è l'ultimo disponibile → default = oggi.
 """
 
 import sys
-from datetime import date, datetime, timedelta
-
 import questionary
 from questionary import Style
+from datetime import date, datetime, timedelta
 
 from .catalog import GmeCatalog
 
 _STYLE = Style([
-    ("qmark",       "fg:#00aa00 bold"),
+    ("qmark",       "fg:#07962A bold"),
     ("question",    "bold"),
-    ("answer",      "fg:#00aaaa bold"),
-    ("pointer",     "fg:#00aa00 bold"),
+    ("answer",      "fg:#458588 italic"),
+    ("pointer",     "fg:#07962A bold"),
     ("highlighted", "fg:#00aa00 bold"),
-    ("selected",    "fg:#00aaaa"),
+    ("selected",    "fg:#003E8A"),
 ])
 
 _MGP_PUBLISH_HOUR = 13  # dopo quest'ora i risultati D+1 sono disponibili
@@ -40,8 +39,8 @@ class GmeUi:
     def smart_default_date() -> date:
         """
         Restituisce la data più recente disponibile per il MGP:
-            - dopo le 14:00 → domani (D+1, risultati pubblicati ~12:55)
-            - prima delle 14:00 → oggi (D)
+            - dopo le 13:00 → domani (D+1, risultati pubblicati ~12:55)
+            - prima delle 13:00 → oggi (D)
         """
         if datetime.now().hour >= _MGP_PUBLISH_HOUR:
             return date.today() + timedelta(days=1)
@@ -126,35 +125,57 @@ class GmeUi:
     @staticmethod
     def ask_date_range() -> tuple[date, date]:
         """
-        Guida l'utente nella scelta dell'intervallo con tre modalità.
-        Il default è la data singola calcolata da smart_default_date().
+        Guida l'utente nella scelta dell'intervallo.
+        Offre preset rapidi (oggi/ieri/settimana/mese) o selezione manuale.
         """
-        default_date = GmeUi.smart_default_date()
-        default_label = f"Data singola  (default: {default_date:%d/%m/%Y})"
+        default_date  = GmeUi.smart_default_date()
+        _PRESET       = "Preset rapido       (oggi / ieri / ultima settimana ...)"
+        _SINGOLA      = f"Data singola        (default: {default_date:%d/%m/%Y})"
+        _INIZIO_FINE  = "Data inizio + data fine"
+        _INIZIO_DUR   = "Data inizio + durata"
+        _FINE_DUR     = "Data fine   + durata"
 
         mode = questionary.select(
             "Intervallo di date:",
-            choices=[
-                default_label,
-                "Data inizio + data fine",
-                "Data inizio + durata",
-                "Data fine   + durata",
-            ],
-            default=default_label,
+            choices=[_PRESET, _SINGOLA, _INIZIO_FINE, _INIZIO_DUR, _FINE_DUR],
+            default=_PRESET,
             style=_STYLE,
         ).ask()
         if mode is None:
             sys.exit(0)
 
-        if mode == default_label:
+        if mode == _PRESET:
+            today = date.today()
+            presets = {
+                f"Oggi               ({today:%d/%m/%Y})":
+                    (today, today),
+                f"Ieri               ({today - timedelta(days=1):%d/%m/%Y})":
+                    (today - timedelta(days=1), today - timedelta(days=1)),
+                f"Ultima settimana   ({today - timedelta(days=6):%d/%m/%Y} -> {today:%d/%m/%Y})":
+                    (today - timedelta(days=6), today),
+                f"Ultimo mese        ({today - timedelta(days=29):%d/%m/%Y} -> {today:%d/%m/%Y})":
+                    (today - timedelta(days=29), today),
+                f"Ultimi 3 mesi      ({today - timedelta(days=89):%d/%m/%Y} -> {today:%d/%m/%Y})":
+                    (today - timedelta(days=89), today),
+            }
+            scelta = questionary.select(
+                "Preset:",
+                choices=list(presets.keys()),
+                style=_STYLE,
+            ).ask()
+            if scelta is None:
+                sys.exit(0)
+            return presets[scelta]
+
+        if mode == _SINGOLA:
             return default_date, default_date
 
-        if mode == "Data inizio + data fine":
+        if mode == _INIZIO_FINE:
             s = GmeUi._ask_date("Data inizio")
             e = GmeUi._ask_date("Data fine  ")
             return s, e
 
-        if mode == "Data inizio + durata":
+        if mode == _INIZIO_DUR:
             s   = GmeUi._ask_date("Data inizio")
             dur = GmeUi._ask_duration()
             return s, s + dur - timedelta(days=1)

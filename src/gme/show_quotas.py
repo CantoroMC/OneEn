@@ -7,7 +7,8 @@ Chiama GET /api/v1/GetMyQuotas e stampa un report con:
   - Ultimo accesso registrato
 
 Utilizzo:
-  python show_quotas.py
+    gme-quotas            (se installato con pip install -e .)
+    python -m gme.show_quotas
 """
 
 import sys
@@ -25,16 +26,6 @@ def _bar(used: int | None, max_val: int | None, width: int = 20) -> str:
     return f"[{bar}] {pct:5.1f}%  ({used} / {max_val})"
 
 
-def _val(data: dict, *keys):
-    """Naviga un dizionario annidato in modo sicuro."""
-    obj = data
-    for k in keys:
-        if not isinstance(obj, dict):
-            return None
-        obj = obj.get(k)
-    return obj
-
-
 def show_quotas() -> None:
     client = GmeClient()
     try:
@@ -45,7 +36,6 @@ def show_quotas() -> None:
 
     limits = q.get("limits") or q.get("Limits") or {}
 
-    # Normalizza chiavi (API restituisce camelCase o PascalCase)
     def get(key_camel: str, key_pascal: str, source: dict = q):
         return source.get(key_camel) or source.get(key_pascal)
 
@@ -81,11 +71,10 @@ def show_quotas() -> None:
     print(f"  Nell'ultima ora       : {_bar(data_hour, max_data_hour)}")
     print()
 
-    # Stima quota ora rimanente
     if data_hour is not None and max_data_hour and max_data_hour > 0:
         remaining = max_data_hour - data_hour
         print(f"  Quota dati rimanente (ora)  : {remaining:,} unita")
-        # Un giorno PUN-MGP-PT15 = 2208 record x 6 campi = ~13'248 unita
+        # 1 giorno PUN-MGP-PT15 = 2208 record x 6 campi = ~13'248 unita
         giorni_stimati = remaining // 13_248
         print(f"  Giorni PUN-MGP scaricabili  : ~{giorni_stimati} (stima su 2208 record x 6 campi)")
 

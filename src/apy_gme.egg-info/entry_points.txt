@@ -1,0 +1,3 @@
+[console_scripts]
+gme-download = gme.download:main
+gme-quotas = gme.show_quotas:show_quotas

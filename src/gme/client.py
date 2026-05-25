@@ -16,20 +16,17 @@ from datetime import date
 
 from dotenv import load_dotenv
 
-load_dotenv()
-
-_BASE_URL     = "https://api.mercatoelettrico.org/request"
-_GME_LOGIN    = os.environ["GME_LOGIN"]
-_GME_PASSWORD = os.environ["GME_PASSWORD"]
+_BASE_URL = "https://api.mercatoelettrico.org/request"
 
 
 class GmeApiError(Exception):
     pass
 
 class GmeClient:
-    def __init__(self, login: str = _GME_LOGIN, password: str = _GME_PASSWORD):
-        self._login = login
-        self._password = password
+    def __init__(self, login: str | None = None, password: str | None = None):
+        load_dotenv()
+        self._login    = login    or os.environ["GME_LOGIN"]
+        self._password = password or os.environ["GME_PASSWORD"]
         self._token: str | None = None
         self._session = requests.Session()
 

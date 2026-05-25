@@ -1,0 +1,13 @@
+pyproject.toml
+src/apy_gme.egg-info/PKG-INFO
+src/apy_gme.egg-info/SOURCES.txt
+src/apy_gme.egg-info/dependency_links.txt
+src/apy_gme.egg-info/entry_points.txt
+src/apy_gme.egg-info/requires.txt
+src/apy_gme.egg-info/top_level.txt
+src/gme/__init__.py
+src/gme/catalog.py
+src/gme/client.py
+src/gme/download.py
+src/gme/show_quotas.py
+src/gme/ui.py

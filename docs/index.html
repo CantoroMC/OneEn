@@ -1,297 +1,333 @@
 <!DOCTYPE html>
 <html lang="it">
-<head>
-  <meta charset="UTF-8" />
-  <title>PUN Dashboard</title>
 
-  <!--
+<head>
+    <meta charset="UTF-8" />
+    <title>PUN Dashboard</title>
+
+    <!--
     ECharts via CDN — nessun npm, nessuna installazione.
     La versione 5 include tutti i tipi di grafici standard.
   -->
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script src="theme/macarons.js"></script>
 
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    body {
-      font-family: system-ui, sans-serif;
-      background: #f5f5f5;
-      color: #222;
-      padding: 24px;
-    }
+        body {
+            font-family: system-ui, sans-serif;
+            background: #f5f5f5;
+            color: #222;
+            padding: 24px;
+        }
 
-    h1 { font-size: 1.4rem; font-weight: 600; margin-bottom: 4px; }
-    .subtitle { font-size: 0.85rem; color: #666; margin-bottom: 24px; }
+        h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
 
-    /* Griglia metriche */
-    .metrics {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    .metric {
-      background: #fff;
-      border-radius: 8px;
-      padding: 14px 18px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.08);
-    }
-    .metric .label { font-size: 0.75rem; color: #888; margin-bottom: 4px; }
-    .metric .value { font-size: 1.3rem; font-weight: 600; }
+        .subtitle {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 24px;
+        }
 
-    /* Contenitori grafici */
-    .chart-wrap {
-      background: #fff;
-      border-radius: 8px;
-      padding: 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.08);
-      margin-bottom: 20px;
-    }
-    .chart-title {
-      font-size: 0.9rem;
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: #444;
-    }
+        /* Griglia metriche */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
 
-    #chart-15min { height: 380px; }
-    #chart-daily { height: 300px; }
-    #chart-spread { height: 260px; }
+        .metric {
+            background: #fff;
+            border-radius: 8px;
+            padding: 14px 18px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+        }
 
-    /* Messaggio di errore/caricamento */
-    #error-msg {
-      display: none;
-      background: #fff3cd;
-      border: 1px solid #ffc107;
-      border-radius: 6px;
-      padding: 12px 16px;
-      margin-bottom: 20px;
-      font-size: 0.9rem;
-    }
-  </style>
+        .metric .label {
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .metric .value {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        /* Contenitori grafici */
+        .chart-wrap {
+            background: #fff;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #444;
+        }
+
+        #chart-15min {
+            height: 380px;
+        }
+
+        #chart-daily {
+            height: 300px;
+        }
+
+        #chart-spread {
+            height: 260px;
+        }
+
+        /* Messaggio di errore/caricamento */
+        #error-msg {
+            display: none;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
+
 <body>
 
-  <h1>PUN MGP — Prezzi al quarto d'ora</h1>
-  <p class="subtitle" id="subtitle">Caricamento dati...</p>
+    <h1>PUN MGP — Prezzi al quarto d'ora</h1>
+    <p class="subtitle" id="subtitle">Caricamento dati...</p>
 
-  <div id="error-msg"></div>
+    <div id="error-msg"></div>
 
-  <div class="metrics" id="metrics"></div>
+    <div class="metrics" id="metrics"></div>
 
-  <div class="chart-wrap">
-    <div class="chart-title">Serie 15 minuti</div>
-    <div id="chart-15min"></div>
-  </div>
+    <div class="chart-wrap">
+        <div class="chart-title">Serie 15 minuti</div>
+        <div id="chart-15min"></div>
+    </div>
 
-  <div class="chart-wrap">
-    <div class="chart-title">Media giornaliera con range min/max</div>
-    <div id="chart-daily"></div>
-  </div>
+    <div class="chart-wrap">
+        <div class="chart-title">Media giornaliera con range min/max</div>
+        <div id="chart-daily"></div>
+    </div>
 
-  <div class="chart-wrap">
-    <div class="chart-title">Spread giornaliero (max − min)</div>
-    <div id="chart-spread"></div>
-  </div>
-
-
-  <script>
-    // -------------------------------------------------------------------------
-    // fetch() è il modo standard per caricare dati in una pagina web.
-    // Richiede un server HTTP — non funziona con file:// direttamente.
-    // Avvia con:  python -m http.server 8000 --directory dashboard
-    // -------------------------------------------------------------------------
-    fetch('data/pun.json')
-      .then(response => {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response.json();          // parsa il JSON → oggetto JS
-      })
-      .then(data => {
-        renderSubtitle(data.meta);
-        renderMetrics(data.stats, data.meta);
-        render15min(data.timeseries);
-        renderDaily(data.daily);
-        renderSpread(data.daily);
-      })
-      .catch(err => {
-        const el = document.getElementById('error-msg');
-        el.style.display = 'block';
-        el.textContent =
-          'Impossibile caricare data/pun.json — ' +
-          'esegui prima build_pun.py, poi avvia il server HTTP. ' +
-          '(' + err.message + ')';
-      });
+    <div class="chart-wrap">
+        <div class="chart-title">Spread giornaliero (max − min)</div>
+        <div id="chart-spread"></div>
+    </div>
 
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-    function fmt(v) { return v.toFixed(2) + ' €/MWh'; }
+    <script>
+        // -------------------------------------------------------------------------
+        // fetch() è il modo standard per caricare dati in una pagina web.
+        // Richiede un server HTTP — non funziona con file:// direttamente.
+        // Avvia con:  python -m http.server 8000 --directory dashboard
+        // -------------------------------------------------------------------------
+        fetch('data/pun.json')
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();          // parsa il JSON → oggetto JS
+            })
+            .then(data => {
+                renderSubtitle(data.meta);
+                renderMetrics(data.stats, data.meta);
+                render15min(data.timeseries);
+                renderDaily(data.daily);
+                renderSpread(data.daily);
+            })
+            .catch(err => {
+                const el = document.getElementById('error-msg');
+                el.style.display = 'block';
+                el.textContent =
+                    'Impossibile caricare data/pun.json — ' +
+                    'esegui prima build_pun.py, poi avvia il server HTTP. ' +
+                    '(' + err.message + ')';
+            });
 
-    function renderSubtitle(meta) {
-      const el = document.getElementById('subtitle');
-      const start = meta.start.split('-').reverse().join('/');
-      const end   = meta.end.split('-').reverse().join('/');
-      el.textContent =
-        `${start} → ${end}  ·  ${meta.n_points.toLocaleString()} quarti d'ora  ·  generato ${meta.generated_at}`;
-    }
 
-    function renderMetrics(stats, meta) {
-      const items = [
-        { label: 'Media',         value: fmt(stats.mean) },
-        { label: 'Minimo',        value: fmt(stats.min)  },
-        { label: 'Massimo',       value: fmt(stats.max)  },
-        { label: 'Dev. standard', value: fmt(stats.std)  },
-        { label: 'Mediana (P50)', value: fmt(stats.p50)  },
-        { label: 'IQR (P75-P25)', value: fmt(stats.p75 - stats.p25) },
-      ];
-      document.getElementById('metrics').innerHTML = items.map(i =>
-        `<div class="metric">
+        // -------------------------------------------------------------------------
+        // Helpers
+        // -------------------------------------------------------------------------
+        function fmt(v) { return v.toFixed(2) + ' €/MWh'; }
+
+        function renderSubtitle(meta) {
+            const el = document.getElementById('subtitle');
+            const start = meta.start.split('-').reverse().join('/');
+            const end = meta.end.split('-').reverse().join('/');
+            el.textContent =
+                `${start} → ${end}  ·  ${meta.n_points.toLocaleString()} quarti d'ora  ·  generato ${meta.generated_at}`;
+        }
+
+        function renderMetrics(stats, meta) {
+            const items = [
+                { label: 'Media', value: fmt(stats.mean) },
+                { label: 'Minimo', value: fmt(stats.min) },
+                { label: 'Massimo', value: fmt(stats.max) },
+                { label: 'Dev. standard', value: fmt(stats.std) },
+                { label: 'Mediana (P50)', value: fmt(stats.p50) },
+                { label: 'IQR (P75-P25)', value: fmt(stats.p75 - stats.p25) },
+            ];
+            document.getElementById('metrics').innerHTML = items.map(i =>
+                `<div class="metric">
            <div class="label">${i.label}</div>
            <div class="value">${i.value}</div>
          </div>`
-      ).join('');
-    }
+            ).join('');
+        }
 
 
-    // -------------------------------------------------------------------------
-    // Grafico 1 — Serie 15 minuti
-    // -------------------------------------------------------------------------
-    function render15min(timeseries) {
-      const chart = echarts.init(document.getElementById('chart-15min'));
+        // -------------------------------------------------------------------------
+        // Grafico 1 — Serie 15 minuti
+        // -------------------------------------------------------------------------
+        function render15min(timeseries) {
+            const chart = echarts.init(document.getElementById('chart-15min'), 'macarons');
 
-      chart.setOption({
-        tooltip: {
-          trigger: 'axis',
-          formatter: params => {
-            const p = params[0];
-            const d = new Date(p.value[0]);
-            return `${d.toLocaleString('it-IT')}<br/><b>${p.value[1].toFixed(2)} €/MWh</b>`;
-          }
-        },
-        xAxis: {
-          type: 'time',
-          boundaryGap: false,
-        },
-        yAxis: {
-          type: 'value',
-          name: '€/MWh',
-          nameLocation: 'end',
-        },
-        // dataZoom permette di fare zoom sulla serie (scroll + drag)
-        dataZoom: [
-          { type: 'inside', start: 0, end: 100 },
-          { type: 'slider',  start: 0, end: 100, height: 24 },
-        ],
-        series: [{
-          type: 'line',
-          data: timeseries,       // ogni elemento è [timestamp_iso, valore]
-          showSymbol: false,
-          lineStyle: { width: 1, color: '#1f77b4' },
-          areaStyle: { opacity: 0.08, color: '#1f77b4' },
-        }],
-        grid: { top: 30, right: 20, bottom: 60, left: 60 },
-      });
+            chart.setOption({
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: params => {
+                        const p = params[0];
+                        const d = new Date(p.value[0]);
+                        return `${d.toLocaleString('it-IT')}<br/><b>${p.value[1].toFixed(2)} €/MWh</b>`;
+                    }
+                },
+                xAxis: {
+                    type: 'time',
+                    boundaryGap: false,
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '€/MWh',
+                    nameLocation: 'end',
+                },
+                // dataZoom permette di fare zoom sulla serie (scroll + drag)
+                dataZoom: [
+                    { type: 'inside', start: 0, end: 100 },
+                    { type: 'slider', start: 0, end: 100, height: 24 },
+                ],
+                series: [{
+                    type: 'line',
+                    data: timeseries,       // ogni elemento è [timestamp_iso, valore]
+                    showSymbol: false,
+                    lineStyle: { width: 1 },
+                    areaStyle: { opacity: 0.08 },
+                }],
+                grid: { top: 30, right: 20, bottom: 60, left: 60 },
+            });
 
-      window.addEventListener('resize', () => chart.resize());
-    }
+            window.addEventListener('resize', () => chart.resize());
+        }
 
 
-    // -------------------------------------------------------------------------
-    // Grafico 2 — Media giornaliera con range min/max
-    // La serie 'custom' disegna barre verticali (range min→max) per ogni giorno.
-    // -------------------------------------------------------------------------
-    function renderDaily(daily) {
-      const chart = echarts.init(document.getElementById('chart-daily'));
+        // -------------------------------------------------------------------------
+        // Grafico 2 — Media giornaliera con range min/max
+        // La serie 'custom' disegna barre verticali (range min→max) per ogni giorno.
+        // -------------------------------------------------------------------------
+        function renderDaily(daily) {
+            const chart = echarts.init(document.getElementById('chart-daily'), 'macarons');
 
-      const dates  = daily.map(d => d.date);
-      const means  = daily.map(d => d.mean);
-      const mins   = daily.map(d => d.min);
-      const maxs   = daily.map(d => d.max);
+            const dates = daily.map(d => d.date);
+            const means = daily.map(d => d.mean);
+            const mins = daily.map(d => d.min);
+            const maxs = daily.map(d => d.max);
 
-      chart.setOption({
-        tooltip: {
-          trigger: 'axis',
-          formatter: params => {
-            const d = params[0].axisValue;
-            const day = daily.find(x => x.date === d);
-            return `${d}<br/>
+            chart.setOption({
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: params => {
+                        const d = params[0].axisValue;
+                        const day = daily.find(x => x.date === d);
+                        return `${d}<br/>
               Media: <b>${day.mean.toFixed(2)}</b> €/MWh<br/>
               Max: ${day.max.toFixed(2)} &nbsp; Min: ${day.min.toFixed(2)}`;
-          }
-        },
-        legend: { data: ['Media', 'Massimo', 'Minimo'], top: 4 },
-        xAxis: { type: 'category', data: dates, axisLabel: { rotate: 45 } },
-        yAxis: { type: 'value', name: '€/MWh' },
-        series: [
-          {
-            name: 'Media',
-            type: 'bar',
-            data: means,
-            itemStyle: { color: '#1f77b4', opacity: 0.85 },
-          },
-          {
-            name: 'Massimo',
-            type: 'line',
-            data: maxs,
-            showSymbol: false,
-            lineStyle: { color: '#d62728', width: 1.5, type: 'dashed' },
-            itemStyle: { color: '#d62728' },
-          },
-          {
-            name: 'Minimo',
-            type: 'line',
-            data: mins,
-            showSymbol: false,
-            lineStyle: { color: '#2ca02c', width: 1.5, type: 'dashed' },
-            itemStyle: { color: '#2ca02c' },
-          },
-        ],
-        grid: { top: 40, right: 20, bottom: 60, left: 60 },
-      });
+                    }
+                },
+                legend: { data: ['Media', 'Massimo', 'Minimo'], top: 4 },
+                xAxis: { type: 'category', data: dates, axisLabel: { rotate: 45 } },
+                yAxis: { type: 'value', name: '€/MWh' },
+                series: [
+                    {
+                        name: 'Media',
+                        type: 'bar',
+                        data: means,
+                        itemStyle: { color: '#1f77b4', opacity: 0.85 },
+                    },
+                    {
+                        name: 'Massimo',
+                        type: 'line',
+                        data: maxs,
+                        showSymbol: false,
+                        lineStyle: { color: '#d62728', width: 1.5, type: 'dashed' },
+                        itemStyle: { color: '#d62728' },
+                    },
+                    {
+                        name: 'Minimo',
+                        type: 'line',
+                        data: mins,
+                        showSymbol: false,
+                        lineStyle: { color: '#2ca02c', width: 1.5, type: 'dashed' },
+                        itemStyle: { color: '#2ca02c' },
+                    },
+                ],
+                grid: { top: 40, right: 20, bottom: 60, left: 60 },
+            });
 
-      window.addEventListener('resize', () => chart.resize());
-    }
+            window.addEventListener('resize', () => chart.resize());
+        }
 
 
-    // -------------------------------------------------------------------------
-    // Grafico 3 — Spread giornaliero (max − min)
-    // Quanto si è "mosso" il prezzo in ogni giornata.
-    // -------------------------------------------------------------------------
-    function renderSpread(daily) {
-      const chart = echarts.init(document.getElementById('chart-spread'));
+        // -------------------------------------------------------------------------
+        // Grafico 3 — Spread giornaliero (max − min)
+        // Quanto si è "mosso" il prezzo in ogni giornata.
+        // -------------------------------------------------------------------------
+        function renderSpread(daily) {
+            const chart = echarts.init(document.getElementById('chart-spread'), 'macarons');
 
-      chart.setOption({
-        tooltip: {
-          trigger: 'axis',
-          formatter: params => {
-            const p = params[0];
-            return `${p.axisValue}<br/>Spread: <b>${p.value.toFixed(2)} €/MWh</b>`;
-          }
-        },
-        xAxis: {
-          type: 'category',
-          data: daily.map(d => d.date),
-          axisLabel: { rotate: 45 },
-        },
-        yAxis: { type: 'value', name: '€/MWh' },
-        visualMap: {
-          // colora le barre in base al valore: basso=verde, alto=rosso
-          show: false,
-          min: Math.min(...daily.map(d => d.spread)),
-          max: Math.max(...daily.map(d => d.spread)),
-          inRange: { color: ['#2ca02c', '#ffab00', '#d62728'] },
-        },
-        series: [{
-          type: 'bar',
-          data: daily.map(d => d.spread),
-        }],
-        grid: { top: 20, right: 20, bottom: 60, left: 60 },
-      });
+            chart.setOption({
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: params => {
+                        const p = params[0];
+                        return `${p.axisValue}<br/>Spread: <b>${p.value.toFixed(2)} €/MWh</b>`;
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: daily.map(d => d.date),
+                    axisLabel: { rotate: 45 },
+                },
+                yAxis: { type: 'value', name: '€/MWh' },
+                visualMap: {
+                    // colora le barre in base al valore: basso=verde, alto=rosso
+                    show: false,
+                    min: Math.min(...daily.map(d => d.spread)),
+                    max: Math.max(...daily.map(d => d.spread)),
+                    inRange: { color: ['#2ca02c', '#ffab00', '#d62728'] },
+                },
+                series: [{
+                    type: 'bar',
+                    data: daily.map(d => d.spread),
+                }],
+                grid: { top: 20, right: 20, bottom: 60, left: 60 },
+            });
 
-      window.addEventListener('resize', () => chart.resize());
-    }
-  </script>
+            window.addEventListener('resize', () => chart.resize());
+        }
+    </script>
 
 </body>
+
 </html>

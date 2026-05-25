@@ -1,8 +1,6 @@
 .env
 cache/
-data/
 dashboard/data/
-!docs/data/
 __pycache__/
 *.pyc
 *.ipynb_checkpoints

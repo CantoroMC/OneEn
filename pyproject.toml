@@ -13,6 +13,9 @@ dependencies = [
     "questionary>=2.0",
 ]
 
+[project.optional-dependencies]
+dashboard = ["streamlit>=1.30", "plotly>=5.0"]
+
 [project.scripts]
 gme-download = "gme.download:main"
 gme-quotas   = "gme.show_quotas:show_quotas"

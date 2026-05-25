@@ -69,6 +69,34 @@ Il file è in `.gitignore` — non committarlo mai.
   Il filtraggio `Zone==PUN` e la costruzione della colonna `Timestamp` da `Period` si
   fanno a valle in Power BI / Excel.
 
+## Dashboard (in sviluppo)
+
+La dashboard usa **Streamlit + Plotly**. Streamlit gestisce layout e widget (slider date,
+selezioni); Plotly fornisce grafici interattivi nativi per serie temporali (zoom, hover,
+range selector). Il pacchetto `gme` viene importato direttamente per fetch dati on-demand.
+
+```
+dashboard/
+├── app.py      # entry point Streamlit
+└── data.py     # fetch + trasformazione PUN (con @st.cache_data TTL 1h)
+```
+
+Avvio (dalla root del progetto):
+```bash
+pip install -e ".[dashboard]"   # installa streamlit + plotly se mancanti
+streamlit run dashboard/app.py
+```
+
+Struttura a pagine (`dashboard/pages/`) disponibile per espansione futura (consumi,
+relazioni prezzo-consumo). Aggiungere `pages/nome.py` e Streamlit la rileva in automatico.
+
+**Nota alternativa**: se in futuro serve maggiore flessibilità di layout o la dashboard
+deve girare come pagina statica (senza server Python), valutare la migrazione a
+**HTML + Plotly.js** o **ECharts**. ECharts è preferibile a Plotly.js per dataset grandi
+(rendering canvas vs SVG) e ha componenti calendario/heatmap più ricchi. Plotly.js è
+più coerente con l'ecosistema Python già in uso. La logica di fetch e trasformazione dati
+rimane invariata — cambia solo il layer di rendering.
+
 ## Problemi noti / TODO
 
 Nessuno al momento. Tutti i bug del SPRINT_REVIEW.md sono stati risolti.
